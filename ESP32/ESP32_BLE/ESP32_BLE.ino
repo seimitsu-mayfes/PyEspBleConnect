@@ -92,19 +92,25 @@ void loop() {
   
   digitalWrite(LED_PIN, bleOn ? HIGH : LOW);  // LEDの状態を更新
   
-  if (digitalRead(BUTTON_PIN) == LOW) {  // ボタンが押された場合
-    if (!buttonPressed) {  // ボタンが前回のループで押されていなかった場合
-      buttonCount++;
-      String str = "BTN:" + String(buttonCount);
-      Serial.print("DEBUG: Button pressed. Count: ");
-      Serial.println(buttonCount);
+  static unsigned long lastDebounceTime = 0;
+  unsigned long debounceDelay = 50;  // デバウンス時間（ミリ秒）
 
-      if (deviceConnected) {  // デバイスが接続されている場合
-        pCharacteristic->setValue(str.c_str());  // キャラクタリスティックの値を設定
-        pCharacteristic->notify();  // 接続されているデバイスに通知
-        Serial.println("DEBUG: Notification sent to client");
+  if (digitalRead(BUTTON_PIN) == LOW) {  // ボタンが押された場合
+    if ((millis() - lastDebounceTime) > debounceDelay) {
+      if (!buttonPressed) {  // ボタンが前回のループで押されていなかった場合
+        buttonCount++;
+        String str = "BTN:" + String(buttonCount);
+        Serial.print("DEBUG: Button pressed. Count: ");
+        Serial.println(buttonCount);
+
+        if (deviceConnected) {  // デバイスが接続されている場合
+          pCharacteristic->setValue(str.c_str());  // キャラクタリスティックの値を設定
+          pCharacteristic->notify();  // 接続されているデバイスに通知
+          Serial.println("DEBUG: Notification sent to client");
+        }
+        buttonPressed = true;
       }
-      buttonPressed = true;
+      lastDebounceTime = millis();
     }
   } else {
     buttonPressed = false;  // ボタンが離された場合、状態をリセット
