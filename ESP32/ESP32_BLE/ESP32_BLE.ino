@@ -6,8 +6,6 @@
 //ここから
 #include "driver/mcpwm.h"
 #define AVENUM 4
-#define SWPIN 16
-#define LEDPIN 15
 
 volatile uint32_t aveInterval[4];
 volatile uint16_t eventCount[4]={0, 0, 0, 0};
@@ -64,8 +62,6 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
 
 void setup() {
   //ここから
-  pinMode(SWPIN, INPUT_PULLUP);
-  pinMode(LEDPIN, OUTPUT);
   iCapSetup();
   Serial.begin(9600);
   //ここまで
@@ -107,9 +103,9 @@ void loop() {
   Serial.print(" ");
 
   if(aveInterval[1] > initialInterval[1]){
-    digitalWrite(LEDPIN, HIGH);
+    digitalWrite(LED_PIN, HIGH);
   }else{
-    digitalWrite(LEDPIN, LOW);
+    digitalWrite(LED_PIN, LOW);
   }
   //ここまで
   if (!deviceConnected && oldDeviceConnected) {  // デバイスが切断された場合
