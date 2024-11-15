@@ -2,7 +2,15 @@
 #include <BLEServer.h>  // BLEサーバーの機能を使用するためのヘッダーファイル
 #include <BLEUtils.h>   // BLEユーティリティ関数を使用するためのヘッダーファイル
 #include <BLE2902.h>    // BLE通知記述子を使用するためのヘッダーファイル
+#include "driver/mcpwm.h"
+#define AVENUM 4
+#define SWPIN 16
+#define LEDPIN 15
 
+volatile uint32_t aveInterval[4];
+volatile uint16_t eventCount[4]={0, 0, 0, 0};
+
+uint32_t initialInterval[4];
 #define SERVICE_UUID        "55725ac1-066c-48b5-8700-2d9fb3603c5e"  // BLEサービスのUUID
 #define CHARACTERISTIC_UUID "69ddb59c-d601-4ea4-ba83-44f679a670ba"  // BLEキャラクタリスティックのUUID
 #define BLE_DEVICE_NAME     "MyBLEDevice"  // BLEデバイスの名前
@@ -51,6 +59,11 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
 };
 
 void setup() {
+  pinMode(SWPIN, INPUT_PULLUP);
+  pinMode(LEDPIN, OUTPUT);
+  iCapSetup();
+  Serial.begin(9600);
+
   pinMode(LED_PIN, OUTPUT);  // LEDピンを出力モードに設定
   pinMode(BUTTON_PIN, INPUT_PULLUP);  // ボタンピンをプルアップ入力モードに設定
   Serial.begin(115200);  // シリアル通信を開始
@@ -115,4 +128,27 @@ void loop() {
   } else {
     buttonPressed = false;  // ボタンが離された場合、状態をリセット
   }
+
+  if(digitalRead(SWPIN)==0){
+    for(int i=0; i<4; i++){
+      initialInterval[i] = aveInterval[i];
+    }
+  }
+
+  Serial.print(initialInterval[0]);
+  Serial.print(" ");
+  Serial.print(aveInterval[0]);
+  Serial.print(" ");
+  Serial.print(aveInterval[1]);
+  Serial.print(" ");
+  Serial.print(aveInterval[2]);
+  Serial.print(" ");
+  Serial.println(aveInterval[3]);
+
+  if(aveInterval[0] > initialInterval[0]*1.5){
+    digitalWrite(LEDPIN, HIGH);
+  }else{
+    digitalWrite(LEDPIN, LOW);
+  }
+  delay(100);
 }
