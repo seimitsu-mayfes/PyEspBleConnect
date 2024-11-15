@@ -63,7 +63,7 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
 void setup() {
   //ここから
   iCapSetup();
-  Serial.begin(9600);
+  //Serial.begin(9600);
   //ここまで
   pinMode(LED_PIN, OUTPUT);  // LEDピンを出力モードに設定
   pinMode(BUTTON_PIN, INPUT_PULLUP);  // ボタンピンをプルアップ入力モードに設定
@@ -100,13 +100,13 @@ void loop() {
 
   Serial.println("DEBUG: initialintarval:");
   Serial.print(initialInterval[1]);
-  Serial.print(" ");
 
   if(aveInterval[1] > initialInterval[1]){
     digitalWrite(LED_PIN, HIGH);
   }else{
     digitalWrite(LED_PIN, LOW);
   }
+  delay(100);
   //ここまで
   if (!deviceConnected && oldDeviceConnected) {  // デバイスが切断された場合
     delay(500);  // Bluetoothスタックの準備のために少し待機
