@@ -125,6 +125,24 @@ void loop() {
   unsigned long debounceDelay = 50;  // デバウンス時間（ミリ秒）
 
   if (digitalRead(BUTTON_PIN) == LOW) {  // ボタンが押された場合
+    //ここから
+    if (deviceConnected) {  // デバイスが接続されている場合
+          initialInterval[1] = aveInterval[1];
+          Serial.println("DEBUG: initialintarval:");
+          Serial.println(initialInterval[1]);
+          String str = "initialintarval:" + String(initialInterval[1]);
+          pCharacteristic->setValue(str.c_str());  // キャラクタリスティックの値を設定
+          pCharacteristic->notify();  // 接続されているデバイスに通知
+          
+        }
+
+    if(aveInterval[1] > initialInterval[1]){
+      digitalWrite(LED_PIN, HIGH);
+    }else{
+      digitalWrite(LED_PIN, LOW);
+      }
+    delay(100);
+    //ここまで
     if ((millis() - lastDebounceTime) > debounceDelay) {
       if (!buttonPressed) {  // ボタンが前回のループで押されていなかった場合
         buttonCount++;
