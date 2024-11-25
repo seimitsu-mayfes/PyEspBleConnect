@@ -3,6 +3,16 @@
 #include <BLEUtils.h>   // BLEユーティリティ関数を使用するためのヘッダーファイル
 #include <BLE2902.h>    // BLE通知記述子を使用するためのヘッダーファイル
 
+//ここから
+#include "driver/mcpwm.h"
+#define AVENUM 4
+
+volatile uint32_t aveInterval[4];
+volatile uint16_t eventCount[4]={0, 0, 0, 0};
+
+uint32_t initialInterval[4];
+//ここまで
+
 #define SERVICE_UUID        "55725ac1-066c-48b5-8700-2d9fb3603c5e"  // BLEサービスのUUID
 #define CHARACTERISTIC_UUID "69ddb59c-d601-4ea4-ba83-44f679a670ba"  // BLEキャラクタリスティックのUUID
 #define BLE_DEVICE_NAME     "MyBLEDevice"  // BLEデバイスの名前
@@ -51,6 +61,10 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
 };
 
 void setup() {
+  //ここから
+  iCapSetup();
+  //Serial.begin(9600);
+  //ここまで
   pinMode(LED_PIN, OUTPUT);  // LEDピンを出力モードに設定
   pinMode(BUTTON_PIN, INPUT_PULLUP);  // ボタンピンをプルアップ入力モードに設定
   Serial.begin(115200);  // シリアル通信を開始
@@ -79,6 +93,21 @@ void setup() {
 }
 
 void loop() {
+  //ここから
+  if(digitalRead(BUTTON_PIN)==LOW){
+    initialInterval[1] = aveInterval[1];
+  }
+
+  Serial.println("DEBUG: initialintarval:");
+  Serial.print(initialInterval[1]);
+
+  if(aveInterval[1] > initialInterval[1]){
+    digitalWrite(LED_PIN, HIGH);
+  }else{
+    digitalWrite(LED_PIN, LOW);
+  }
+  delay(100);
+  //ここまで
   if (!deviceConnected && oldDeviceConnected) {  // デバイスが切断された場合
     delay(500);  // Bluetoothスタックの準備のために少し待機
     pServer->startAdvertising();  // アドバタイジングを再開
@@ -96,6 +125,24 @@ void loop() {
   unsigned long debounceDelay = 50;  // デバウンス時間（ミリ秒）
 
   if (digitalRead(BUTTON_PIN) == LOW) {  // ボタンが押された場合
+    //ここから
+    if (deviceConnected) {  // デバイスが接続されている場合
+          initialInterval[1] = aveInterval[1];
+          Serial.println("DEBUG: initialintarval:");
+          Serial.println(initialInterval[1]);
+          String str = "initialintarval:" + String(initialInterval[1]);
+          pCharacteristic->setValue(str.c_str());  // キャラクタリスティックの値を設定
+          pCharacteristic->notify();  // 接続されているデバイスに通知
+          
+        }
+
+    if(aveInterval[1] > initialInterval[1]){
+      digitalWrite(LED_PIN, HIGH);
+    }else{
+      digitalWrite(LED_PIN, LOW);
+      }
+    delay(100);
+    //ここまで
     if ((millis() - lastDebounceTime) > debounceDelay) {
       if (!buttonPressed) {  // ボタンが前回のループで押されていなかった場合
         buttonCount++;
