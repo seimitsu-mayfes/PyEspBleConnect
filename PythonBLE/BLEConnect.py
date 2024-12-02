@@ -12,11 +12,12 @@ CHARACTERISTIC_UUID = "69ddb59c-d601-4ea4-ba83-44f679a670ba"
 async def notification_handler(sender, data):
     """通知を処理するコールバック関数"""
     print(f"\nReceived notification: {data.decode()}")
-    print("Enter command (00: LED OFF, 01: LED ON, q: quit): ", end='', flush=True)
+    #print("Enter command (00: LED OFF, 01: LED ON, q: quit): ", end='', flush=True)
 
 async def user_input(client):
     while True:
-        command = await aioconsole.ainput("Enter command (00: LED OFF, 01: LED ON, q: quit): ")
+        #command = await aioconsole.ainput("Enter command (00: LED OFF, 01: LED ON, q: quit): ")
+        command = await aioconsole.ainput("")
         if command.lower() == 'q':
             return False
         elif command in ['00', '01']:

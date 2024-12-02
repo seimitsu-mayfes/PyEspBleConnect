@@ -123,8 +123,9 @@ void loop() {
   
   static unsigned long lastDebounceTime = 0;
   unsigned long debounceDelay = 50;  // デバウンス時間（ミリ秒）
-
-  if (digitalRead(BUTTON_PIN) == LOW) {  // ボタンが押された場合
+  
+  //if (digitalRead(BUTTON_PIN) == LOW) {  // ボタンが押された場合
+  if (true) {  // ボタンが押された場合
     //ここから
     if (deviceConnected) {  // デバイスが接続されている場合
           initialInterval[1] = aveInterval[1];
