@@ -1,13 +1,11 @@
 import asyncio
 from bleak import BleakClient, BleakScanner
-import aioconsole
 import numpy as np
 import plotly.graph_objs as go
 from dash import Dash, dcc, html
 import dash.dependencies as dd
 import threading
 import time
-
 
 # ESP32のBLEデバイス名
 DEVICE_NAME = "MyBLEDevice"
@@ -21,7 +19,8 @@ app = Dash(__name__)
 
 # グローバル変数
 data_points = []  # BLEから受信したデータを格納するリスト
-duration = 10  # プロットする時間（秒）
+timestamps = []   # データ受信時刻を格納するリスト
+duration = 10     # プロットする時間（秒）
 graph_update_interval = 500  # グラフ更新間隔（ミリ秒）
 
 # グラフレイアウトの設定
@@ -38,20 +37,29 @@ app.layout = html.Div([
 async def notification_handler(sender, data):
     """通知を処理するコールバック関数"""
     value = int.from_bytes(data, byteorder='little')  # 受信データを整数に変換
+    current_time = time.time()  # 現在時刻を取得
+
     print(f"\nReceived notification: {value}")
     
-    # 最新のデータポイントを保持するためにリストを更新
+    # 最新のデータポイントとその受信時刻を保持するためにリストを更新
     data_points.append(value)
+    timestamps.append(current_time)  # タイムスタンプも追加
     
     # 現在時刻からduration秒前までのデータのみ保持するロジック
-    if len(data_points) > duration * (1000 / graph_update_interval):  # データポイント数が制限を超えた場合
+    cutoff_time = current_time - duration  # 切り捨てる時間（duration秒前）
+    
+    while len(timestamps) > 0 and timestamps[0] < cutoff_time:  # 古いデータがcutoff_timeより小さい場合
         removed_value = data_points.pop(0)  # 古いデータポイントを削除
-        print(f"Removed data point: {removed_value}")  # 削除したデータポイントのログ
+        removed_timestamp = timestamps.pop(0)  # 古いタイムスタンプを削除
+        
+        print(f"Removed data point: value={removed_value}, timestamp={removed_timestamp}")  # 削除したデータポイントのログ
 
 async def main():
+    """BLEデバイスに接続し、通知を受信するメイン関数"""
     device = await BleakScanner.find_device_by_name(DEVICE_NAME)
     
     if not device:
+        
         print(f"Could not find device with name '{DEVICE_NAME}'")
         return
 
@@ -61,7 +69,7 @@ async def main():
         await client.start_notify(CHARACTERISTIC_UUID, notification_handler)
 
         try:
-            await asyncio.Event().wait()  # 無限待機（実際には他の処理が必要な場合に置き換えてください）
+            await asyncio.Event().wait()  # 無限待機（他の処理が必要な場合はここで置き換える）
         except asyncio.CancelledError:
             pass
 
@@ -75,24 +83,24 @@ async def main():
 )
 def update_graph(n):
     """グラフを更新するコールバック関数"""
-    current_time = np.arange(len(data_points)) * (graph_update_interval / 1000) - duration
+    current_time = time.time()
     
     figure = {
         'data': [go.Scatter(
-            x=current_time[:len(data_points)],  # 現在時刻からduration秒前までの相対時間でプロット
-            y=data_points,  
-            mode='lines+markers',  
-            name='BLE Data'  
+            x=[t - current_time for t in timestamps],  # 現在時刻からduration秒前までの相対時間でプロット
+            y=data_points,
+            mode='lines+markers',
+            name='BLE Data'
         )],
         'layout': go.Layout(
-            title='Real-time BLE Data',  
+            title='Real-time BLE Data',
             xaxis=dict(
                 title='Time (s)',
-                range=[-duration, 0], 
+                range=[-duration, 0],
                 dtick=1,
                 tickformat="%H:%M:%S",
-            ),  
-            yaxis=dict(title='Value')  
+            ),
+            yaxis=dict(title='Value')
         )
     }
     
