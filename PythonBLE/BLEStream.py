@@ -59,7 +59,6 @@ async def main():
     device = await BleakScanner.find_device_by_name(DEVICE_NAME)
     
     if not device:
-        
         print(f"Could not find device with name '{DEVICE_NAME}'")
         return
 
@@ -76,6 +75,10 @@ async def main():
         await client.stop_notify(CHARACTERISTIC_UUID)
 
     print("Disconnected")
+
+def run_asyncio():
+    """非同期処理用の関数"""
+    asyncio.run(main())  # mainコルーチンを実行
 
 @app.callback(
     dd.Output('live-graph', 'figure'),  
@@ -128,9 +131,9 @@ def update_time_display(n):
     return f'Current Time: {formatted_time}'  
 
 if __name__ == '__main__':
-    data_thread = threading.Thread(target=main)
+    data_thread = threading.Thread(target=run_asyncio)  # run_asyncio関数をスレッドで実行
     data_thread.daemon = True
     
     data_thread.start()  
 
-    app.run_server(debug=True)
+    app.run_server(debug=True)  # Dashアプリケーションのサーバーを起動
