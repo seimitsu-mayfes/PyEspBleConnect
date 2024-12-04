@@ -34,10 +34,16 @@ app.layout = html.Div([
     html.Div(id='time-display', style={'fontSize': 20})  # 現在時刻を表示するためのDiv
 ])
 
+
+
 async def notification_handler(sender, data):
     """通知を処理するコールバック関数"""
-    value = int.from_bytes(data, byteorder='little')  # 受信データを整数に変換
-    current_time = time.time()  # 現在時刻を取得
+    decoded_data = data.decode()
+    if ':' in decoded_data:
+        value = int(decoded_data.split(':')[1])  # コロンの後ろの数値部分を抽出して変換
+    else:
+        value = int(decoded_data)  # 数値のみの場合はそのまま変換
+    current_time = time.time()
 
     print(f"\nReceived notification: {value}")
     
@@ -48,11 +54,11 @@ async def notification_handler(sender, data):
     # 現在時刻からduration秒前までのデータのみ保持するロジック
     cutoff_time = current_time - duration  # 切り捨てる時間（duration秒前）
     
-    while len(timestamps) > 0 and timestamps[0] < cutoff_time:  # 古いデータがcutoff_timeより小さい場合
-        removed_value = data_points.pop(0)  # 古いデータポイントを削除
-        removed_timestamp = timestamps.pop(0)  # 古いタイムスタンプを削除
+    # while len(timestamps) > 0 and timestamps[0] < cutoff_time:  # 古いデータがcutoff_timeより小さい場合
+    #     removed_value = data_points.pop(0)  # 古いデータポイントを削除
+    #     removed_timestamp = timestamps.pop(0)  # 古いタイムスタンプを削除
         
-        print(f"Removed data point: value={removed_value}, timestamp={removed_timestamp}")  # 削除したデータポイントのログ
+    #     print(f"Removed data point: value={removed_value}, timestamp={removed_timestamp}")  # 削除したデータポイントのログ
 
 async def main():
     """BLEデバイスに接続し、通知を受信するメイン関数"""
