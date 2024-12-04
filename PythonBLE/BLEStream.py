@@ -35,10 +35,11 @@ app.layout = html.Div([
 ])
 
 async def notification_handler(sender, data):
-    """通知を処理するコールバック関数"""
-    value = int.from_bytes(data, byteorder='little')
-    current_time = time.time()
-    data_queue.put((value, current_time))
+    decoded_data = data.decode()
+    if ':' in decoded_data:
+        value = int(decoded_data.split(':')[1])  # コロンの後ろの数値部分を抽出して変換
+    else:
+        value = int(decoded_data)  # 数値のみの場合はそのまま変換
     print(f"\nReceived notification: {value}")
 
 async def main():
@@ -114,7 +115,7 @@ def update_graph(n):
             ),
             yaxis=dict(
                 title='Value',
-                range=[0, 10000]  # y軸の範囲を0から10000に固定
+                range=[0, 100000]  # y軸の範囲を0から100000に設定（必要に応じて調整）
             )
         )
     }
