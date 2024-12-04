@@ -6,7 +6,12 @@ python3 -m venv myenv<br>
 source myenv/bin/activate<br>
 pip install -r requirements.txt<br>
 cd PythonBLE <br>
+
 python3 BLEConnect.py<br> 
+python3 StreamExample.py<br>
+python3 BLEStream.py<br>
+    http://127.0.0.1:8050/ に移動<br>
+
 
 #　グラフ可視化の方法をBokehにした理由
 データ可視化ライブラリとしてはSeabornやMatplotlibなどもあったがインタラクティブ性でPlotlyとBokehで迷った。
