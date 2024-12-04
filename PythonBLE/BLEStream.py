@@ -40,6 +40,8 @@ async def notification_handler(sender, data):
         value = int(decoded_data.split(':')[1])  # コロンの後ろの数値部分を抽出して変換
     else:
         value = int(decoded_data)  # 数値のみの場合はそのまま変換
+    current_time = time.time()
+    data_queue.put((value, current_time))  # この行を追加
     print(f"\nReceived notification: {value}")
 
 async def main():
@@ -79,6 +81,7 @@ def process_data():
             value, timestamp = data_queue.get(timeout=1)
             data_points.append(value)
             timestamps.append(timestamp)
+            print(f"Added data point: {value} at {timestamp}")  # この行を追加
 
             current_time = time.time()
             cutoff_time = current_time - duration
