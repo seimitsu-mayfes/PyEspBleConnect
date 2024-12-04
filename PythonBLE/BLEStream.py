@@ -109,7 +109,10 @@ def update_graph(n):
                 dtick=1,
                 tickformat="%H:%M:%S",
             ),
-            yaxis=dict(title='Value')
+            yaxis=dict(
+                title='Value',
+                range=[0, 10000]  # y軸の範囲を0から10000に固定
+            )
         )
     }
     
