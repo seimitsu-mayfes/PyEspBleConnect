@@ -51,19 +51,16 @@ async def notification_handler(sender, data):
     data_points.append(value)
     timestamps.append(current_time)  # タイムスタンプも追加
     
-    # 現在時刻からduration秒前までのデータのみ保持するロジック
-    cutoff_time = current_time - duration  # 切り捨てる時間（duration秒前）
-    
-    print(len(data_points))
-    print(len(timestamps))
-
+    # データポイントの数が上限を超えた場合、古いデータを削除
     Max_data_number = 256
-    while  (len(data_points) > Max_data_number):  # 古いデータがcutoff_timeより小さい場合
-        removed_value = data_points.pop(0)  # 古いデータポイントを削除
-        removed_timestamp = timestamps.pop(0)  # 古いタイムスタンプを削除
-        
-        print(f"Removed data point: value={removed_value}, timestamp={removed_timestamp}")  # 削除したデータポイントのログ
+    while len(data_points) > Max_data_number:
+        removed_value = data_points.pop(0)
+        removed_timestamp = timestamps.pop(0)
+        print(f"Removed data point: value={removed_value}, timestamp={removed_timestamp}")
 
+    print(f"Current data points: {len(data_points)}")
+    print(f"Current timestamps: {len(timestamps)}")
+    
 async def main():
     """BLEデバイスに接続し、通知を受信するメイン関数"""
     device = await BleakScanner.find_device_by_name(DEVICE_NAME)
