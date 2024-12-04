@@ -6,6 +6,7 @@ from dash import Dash, dcc, html
 import dash.dependencies as dd
 import threading
 import time
+import queue
 
 # ESP32のBLEデバイス名
 DEVICE_NAME = "MyBLEDevice"
@@ -18,41 +19,27 @@ CHARACTERISTIC_UUID = "69ddb59c-d601-4ea4-ba83-44f679a670ba"
 app = Dash(__name__)
 
 # グローバル変数
-data_points = []  # BLEから受信したデータを格納するリスト
-timestamps = []   # データ受信時刻を格納するリスト
+data_queue = queue.Queue()  # スレッド間でデータを安全に受け渡すためのキュー
 duration = 10     # プロットする時間（秒）
 graph_update_interval = 500  # グラフ更新間隔（ミリ秒）
 
 # グラフレイアウトの設定
 app.layout = html.Div([
-    dcc.Graph(id='live-graph', animate=True),  # リアルタイムで更新されるグラフ
+    dcc.Graph(id='live-graph', animate=True),
     dcc.Interval(
         id='graph-update',
-        interval=graph_update_interval,  # グラフ更新の間隔を設定（ミリ秒）
-        n_intervals=0  # 初期値として0を設定
+        interval=graph_update_interval,
+        n_intervals=0
     ),
-    html.Div(id='time-display', style={'fontSize': 20})  # 現在時刻を表示するためのDiv
+    html.Div(id='time-display', style={'fontSize': 20})
 ])
 
 async def notification_handler(sender, data):
     """通知を処理するコールバック関数"""
-    value = int.from_bytes(data, byteorder='little')  # 受信データを整数に変換
-    current_time = time.time()  # 現在時刻を取得
-
+    value = int.from_bytes(data, byteorder='little')
+    current_time = time.time()
+    data_queue.put((value, current_time))
     print(f"\nReceived notification: {value}")
-    
-    # 最新のデータポイントとその受信時刻を保持するためにリストを更新
-    data_points.append(value)
-    timestamps.append(current_time)  # タイムスタンプも追加
-    
-    # 現在時刻からduration秒前までのデータのみ保持するロジック
-    cutoff_time = current_time - duration  # 切り捨てる時間（duration秒前）
-    
-    while len(timestamps) > 0 and timestamps[0] < cutoff_time:  # 古いデータがcutoff_timeより小さい場合
-        removed_value = data_points.pop(0)  # 古いデータポイントを削除
-        removed_timestamp = timestamps.pop(0)  # 古いタイムスタンプを削除
-        
-        print(f"Removed data point: value={removed_value}, timestamp={removed_timestamp}")  # 削除したデータポイントのログ
 
 async def main():
     """BLEデバイスに接続し、通知を受信するメイン関数"""
@@ -68,7 +55,7 @@ async def main():
         await client.start_notify(CHARACTERISTIC_UUID, notification_handler)
 
         try:
-            await asyncio.Event().wait()  # 無限待機（他の処理が必要な場合はここで置き換える）
+            await asyncio.Event().wait()
         except asyncio.CancelledError:
             pass
 
@@ -78,7 +65,29 @@ async def main():
 
 def run_asyncio():
     """非同期処理用の関数"""
-    asyncio.run(main())  # mainコルーチンを実行
+    asyncio.run(main())
+
+# データ処理用のグローバル変数
+data_points = []
+timestamps = []
+
+def process_data():
+    """データ処理用の関数"""
+    while True:
+        try:
+            value, timestamp = data_queue.get(timeout=1)
+            data_points.append(value)
+            timestamps.append(timestamp)
+
+            current_time = time.time()
+            cutoff_time = current_time - duration
+
+            while len(timestamps) > 0 and timestamps[0] < cutoff_time:
+                data_points.pop(0)
+                timestamps.pop(0)
+
+        except queue.Empty:
+            pass
 
 @app.callback(
     dd.Output('live-graph', 'figure'),  
@@ -90,7 +99,7 @@ def update_graph(n):
     
     figure = {
         'data': [go.Scatter(
-            x=[t - current_time for t in timestamps],  # 現在時刻からduration秒前までの相対時間でプロット
+            x=[t - current_time for t in timestamps],
             y=data_points,
             mode='lines+markers',
             name='BLE Data'
@@ -103,11 +112,14 @@ def update_graph(n):
                 dtick=1,
                 tickformat="%H:%M:%S",
             ),
-            yaxis=dict(title='Value')
+            yaxis=dict(
+                title='Value',
+                range=[0, 10000]  # y軸の範囲を0から10000に固定
+            )
         )
     }
     
-    print(f"Updated graph with {len(data_points)} data points.")  # 更新されたグラフに関するログ
+    print(f"Updated graph with {len(data_points)} data points.")
     
     return figure
 
@@ -128,12 +140,15 @@ def update_time_display(n):
 
     formatted_time = f"{hours_since_epoch}時{minutes_since_epoch}分{seconds_since_epoch}秒.{milliseconds:03d}"  
     
-    return f'Current Time: {formatted_time}'  
+    return f'Current Time: {formatted_time}'
 
 if __name__ == '__main__':
-    data_thread = threading.Thread(target=run_asyncio)  # run_asyncio関数をスレッドで実行
-    data_thread.daemon = True
-    
-    data_thread.start()  
+    ble_thread = threading.Thread(target=run_asyncio)
+    ble_thread.daemon = True
+    ble_thread.start()
 
-    app.run_server(debug=True)  # Dashアプリケーションのサーバーを起動
+    data_process_thread = threading.Thread(target=process_data)
+    data_process_thread.daemon = True
+    data_process_thread.start()
+
+    app.run_server(debug=True)
