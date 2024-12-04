@@ -54,7 +54,11 @@ async def notification_handler(sender, data):
     # 現在時刻からduration秒前までのデータのみ保持するロジック
     cutoff_time = current_time - duration  # 切り捨てる時間（duration秒前）
     
-    while len(timestamps) > 2e8:  # 古いデータがcutoff_timeより小さい場合
+    print(len(data_points))
+    print(len(timestamps))
+
+    Max_data_number = 256
+    while  (len(data_points) > Max_data_number):  # 古いデータがcutoff_timeより小さい場合
         removed_value = data_points.pop(0)  # 古いデータポイントを削除
         removed_timestamp = timestamps.pop(0)  # 古いタイムスタンプを削除
         

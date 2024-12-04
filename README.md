@@ -10,7 +10,7 @@ cd PythonBLE <br>
 python3 BLEConnect.py<br> 
 python3 StreamExample.py<br>
 python3 BLEStream.py<br>
-    http://127.0.0.1:8050/ に移動<br>
+    表示されるurl (http://127.0.0.1:8050/)など に移動<br>
 
 
 #　グラフ可視化の方法をBokehにした理由
