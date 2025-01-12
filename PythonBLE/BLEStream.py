@@ -112,7 +112,7 @@ def update_graph(n):
             ),
             yaxis=dict(
                 title='Value',
-                range=[0, 10000]  # y軸の範囲を0から10000に固定
+                range=[0, 500000000]  # y軸の範囲を0から10000に固定
             )
         )
     }

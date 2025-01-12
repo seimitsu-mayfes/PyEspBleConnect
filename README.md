@@ -1,10 +1,12 @@
 # PyEspBleConnect
 pythonとESP32をbluetooth low energy で接続する方法
 
+
 <br>
-python3 -m venv myenv<br>
-source myenv/bin/activate<br>
-pip install -r requirements.txt<br>
+python3 -m venv myenv　仮想環境を作成<br>
+source myenv/bin/activate 仮想環境を有効化<br>
+pip install -r requirements.txt 必要なライブラリを仮想環境にインストール<br>
+
 cd PythonBLE <br>
 
 python3 BLEConnect.py<br> 
